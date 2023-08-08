@@ -1,11 +1,11 @@
 structure Lexer =
 struct
-  datatype TokenType =
-    Illegal
+  datatype Token =
+    Illegal of string
   | EOF
   (* Identifiers and literals *)
-  | Ident
-  | Int
+  | Ident of string
+  | Int of string
   (* Operators *)
   | Assign
   | Plus
@@ -33,8 +33,6 @@ struct
   | Else
   | Return
 
-  type Token = {tokenType: TokenType, literal: string}
-
   type LexerT = {input: string, position: int, readPosition: int, ch: char}
 
   fun readChar (l: LexerT) : LexerT =
@@ -55,7 +53,7 @@ struct
     if #readPosition l >= String.size (#input l) then Char.minChar
     else String.sub (#input l, #readPosition l)
 
-  fun isLetter (ch: char) : bool =
+  fun isLetter ch =
     #"a" <= ch andalso #"z" >= ch orelse #"A" <= ch andalso #"Z" >= ch
     orelse #"_" = ch
 
@@ -66,9 +64,9 @@ struct
   fun readIdentifier (l: LexerT) : string * LexerT =
     let
       val s = #position l
-      val e = scanIdent (#input l) (#position l)
+      val e = scanIdent (#input l) s
     in
-      ( String.substring (#input l, s, e)
+      ( String.substring (#input l, s, (e - s))
       , { input = #input l
         , position = e - 1
         , readPosition = e
@@ -77,7 +75,7 @@ struct
       )
     end
 
-  fun lookupIdent (ident: string) : TokenType =
+  fun lookupIdent ident =
     case ident of
       "fn" => Function
     | "let" => Let
@@ -86,7 +84,7 @@ struct
     | "if" => If
     | "else" => Else
     | "return" => Return
-    | x => Ident
+    | other => Ident other
 
   fun skipWhitespace (l: LexerT) : LexerT =
     let
@@ -98,7 +96,7 @@ struct
         l
     end
 
-  fun isDigit (ch: char) : bool = #"0" <= ch andalso #"9" >= ch
+  fun isDigit ch = #"0" <= ch andalso #"9" >= ch
 
   fun scanNumber input index =
     if isDigit (String.sub (input, index)) then scanNumber input (index + 1)
@@ -109,7 +107,7 @@ struct
       val s = #position l
       val e = scanNumber (#input l) (#position l)
     in
-      ( String.substring (#input l, s, e)
+      ( String.substring (#input l, s, (e - s))
       , { input = #input l
         , position = e - 1
         , readPosition = e
@@ -124,60 +122,54 @@ struct
   fun nextToken (l: LexerT) : Token * LexerT =
     let
       val l = skipWhitespace l
+      val ch = #ch l
     in
       let
-        val ch = #ch l
         val (token, l') =
           if ch = #"=" then
-            ({tokenType = Assign, literal = Char.toString (ch)}, l)
+            (Assign, l)
           else if ch = #";" then
-            ({tokenType = Semicolon, literal = Char.toString (ch)}, l)
+            (Semicolon, l)
           else if ch = #"(" then
-            ({tokenType = LParen, literal = Char.toString (ch)}, l)
+            (LParen, l)
           else if ch = #")" then
-            ({tokenType = RParen, literal = Char.toString (ch)}, l)
+            (RParen, l)
           else if ch = #"," then
-            ({tokenType = Comma, literal = Char.toString (ch)}, l)
+            (Comma, l)
           else if ch = #"+" then
-            ({tokenType = Plus, literal = Char.toString (ch)}, l)
+            (Plus, l)
           else if ch = #"-" then
-            ({tokenType = Minus, literal = Char.toString (ch)}, l)
+            (Minus, l)
           else if ch = #"*" then
-            ({tokenType = Asterisk, literal = Char.toString (ch)}, l)
+            (Asterisk, l)
           else if ch = #"/" then
-            ({tokenType = Slash, literal = Char.toString (ch)}, l)
+            (Slash, l)
           else if ch = #"!" then
-            ({tokenType = Bang, literal = Char.toString (ch)}, l)
+            (Bang, l)
           else if ch = #"<" then
-            ({tokenType = LT, literal = Char.toString (ch)}, l)
+            (LT, l)
           else if ch = #">" then
-            ({tokenType = GT, literal = Char.toString (ch)}, l)
+            (GT, l)
           else if ch = #"{" then
-            ({tokenType = LBrace, literal = Char.toString (ch)}, l)
+            (LBrace, l)
           else if ch = #"}" then
-            ({tokenType = RBrace, literal = Char.toString (ch)}, l)
+            (RBrace, l)
           else if ch = #"=" then
-            if peekChar l = #"=" then
-              ({tokenType = Eq, literal = "=="}, readChar l)
-            else
-              ({tokenType = Assign, literal = Char.toString (ch)}, l)
+            if peekChar l = #"=" then (Eq, readChar l) else (Assign, l)
           else if ch = #"!" then
-            if peekChar l = #"=" then
-              ({tokenType = NotEq, literal = "!="}, readChar l)
-            else
-              ({tokenType = Bang, literal = Char.toString (ch)}, l)
+            if peekChar l = #"=" then (NotEq, readChar l) else (Bang, l)
           else if ch = Char.minChar then
-            ({tokenType = EOF, literal = Char.toString (ch)}, l)
+            (EOF, l)
           else if isLetter (ch) then
             let val (ident, l2) = readIdentifier (l)
-            in ({tokenType = lookupIdent ident, literal = ident}, l2)
+            in (lookupIdent ident, l2)
             end
           else if isDigit (ch) then
             let val (number, l2) = readNumber (l)
-            in ({tokenType = Int, literal = number}, l2)
+            in (Int number, l2)
             end
           else
-            ({tokenType = Illegal, literal = Char.toString (ch)}, l)
+            (Illegal (Char.toString ch), l)
       in
         (token, readChar (l'))
       end
