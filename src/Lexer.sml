@@ -126,50 +126,34 @@ struct
     in
       let
         val (token, l') =
-          if ch = #"=" then
-            (Assign, l)
-          else if ch = #";" then
-            (Semicolon, l)
-          else if ch = #"(" then
-            (LParen, l)
-          else if ch = #")" then
-            (RParen, l)
-          else if ch = #"," then
-            (Comma, l)
-          else if ch = #"+" then
-            (Plus, l)
-          else if ch = #"-" then
-            (Minus, l)
-          else if ch = #"*" then
-            (Asterisk, l)
-          else if ch = #"/" then
-            (Slash, l)
-          else if ch = #"!" then
-            (Bang, l)
-          else if ch = #"<" then
-            (LT, l)
-          else if ch = #">" then
-            (GT, l)
-          else if ch = #"{" then
-            (LBrace, l)
-          else if ch = #"}" then
-            (RBrace, l)
-          else if ch = #"=" then
-            if peekChar l = #"=" then (Eq, readChar l) else (Assign, l)
-          else if ch = #"!" then
-            if peekChar l = #"=" then (NotEq, readChar l) else (Bang, l)
-          else if ch = Char.minChar then
-            (EOF, l)
-          else if isLetter (ch) then
-            let val (ident, l2) = readIdentifier (l)
-            in (lookupIdent ident, l2)
-            end
-          else if isDigit (ch) then
-            let val (number, l2) = readNumber (l)
-            in (Int number, l2)
-            end
-          else
-            (Illegal (Char.toString ch), l)
+          case ch of
+            #";" => (Semicolon, l)
+          | #"(" => (LParen, l)
+          | #")" => (RParen, l)
+          | #"," => (Comma, l)
+          | #"+" => (Plus, l)
+          | #"-" => (Minus, l)
+          | #"*" => (Asterisk, l)
+          | #"/" => (Slash, l)
+          | #"<" => (LT, l)
+          | #">" => (GT, l)
+          | #"{" => (LBrace, l)
+          | #"}" => (RBrace, l)
+          | #"=" => if peekChar l = #"=" then (Eq, readChar l) else (Assign, l)
+          | #"!" => if peekChar l = #"=" then (NotEq, readChar l) else (Bang, l)
+          | ch =>
+              if ch = Char.minChar then
+                (EOF, l)
+              else if isLetter (ch) then
+                let val (ident, l2) = readIdentifier (l)
+                in (lookupIdent ident, l2)
+                end
+              else if isDigit (ch) then
+                let val (number, l2) = readNumber (l)
+                in (Int number, l2)
+                end
+              else
+                (Illegal (Char.toString ch), l)
       in
         (token, readChar (l'))
       end
