@@ -35,7 +35,7 @@ struct
 
   type LexerT = {input: string, position: int, readPosition: int, ch: char}
 
-  fun readChar (l: LexerT) : LexerT =
+  fun readChar (l: LexerT) =
     if #readPosition l >= String.size (#input l) then
       { input = #input l
       , position = #position l
@@ -49,7 +49,7 @@ struct
       , ch = String.sub (#input l, #readPosition l)
       }
 
-  fun peekChar (l: LexerT) : char =
+  fun peekChar (l: LexerT) =
     if #readPosition l >= String.size (#input l) then Char.minChar
     else String.sub (#input l, #readPosition l)
 
@@ -63,7 +63,7 @@ struct
     else
       index
 
-  fun readIdentifier (l: LexerT) : string * LexerT =
+  fun readIdentifier (l: LexerT) =
     let
       val s = #position l
       val e = scanTill (#input l) s isLetter
@@ -88,7 +88,7 @@ struct
     | "return" => Return
     | other => Ident other
 
-  fun skipWhitespace (l: LexerT) : LexerT =
+  fun skipWhitespace (l: LexerT) =
     let
       val ch = #ch l
     in
@@ -100,7 +100,7 @@ struct
 
   fun isDigit ch = #"0" <= ch andalso #"9" >= ch
 
-  fun readNumber (l: LexerT) : string * LexerT =
+  fun readNumber (l: LexerT) =
     let
       val s = #position l
       val e = scanTill (#input l) (#position l) isDigit
@@ -117,7 +117,7 @@ struct
   fun new code =
     readChar ({input = code, position = 0, readPosition = 0, ch = Char.minChar})
 
-  fun nextToken (l: LexerT) : Token * LexerT =
+  fun nextToken (l: LexerT) =
     let
       val l = skipWhitespace l
       val ch = #ch l
