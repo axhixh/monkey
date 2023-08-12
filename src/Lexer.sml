@@ -35,23 +35,23 @@ struct
 
   type LexerT = {input: string, position: int, readPosition: int, ch: char}
 
-  fun readChar (l: LexerT) =
-    if #readPosition l >= String.size (#input l) then
-      { input = #input l
-      , position = #position l
-      , readPosition = #readPosition l
+  fun readChar lexer =
+    if #readPosition lexer >= String.size (#input lexer) then
+      { input = #input lexer
+      , position = #position lexer
+      , readPosition = #readPosition lexer
       , ch = Char.minChar
       }
     else
-      { input = #input l
-      , position = #readPosition l
-      , readPosition = #readPosition l + 1
-      , ch = String.sub (#input l, #readPosition l)
+      { input = #input lexer
+      , position = #readPosition lexer
+      , readPosition = #readPosition lexer + 1
+      , ch = String.sub (#input lexer, #readPosition lexer)
       }
 
-  fun peekChar (l: LexerT) =
-    if #readPosition l >= String.size (#input l) then Char.minChar
-    else String.sub (#input l, #readPosition l)
+  fun peekChar lexer =
+    if #readPosition lexer >= String.size (#input lexer) then Char.minChar
+    else String.sub (#input lexer, #readPosition lexer)
 
   fun isLetter ch =
     #"a" <= ch andalso #"z" >= ch orelse #"A" <= ch andalso #"Z" >= ch
@@ -63,16 +63,16 @@ struct
     else
       index
 
-  fun readIdentifier (l: LexerT) =
+  fun readIdentifier lexer =
     let
-      val s = #position l
-      val e = scanTill (#input l) s isLetter
+      val s = #position lexer
+      val e = scanTill (#input lexer) s isLetter
     in
-      ( String.substring (#input l, s, (e - s))
-      , { input = #input l
+      ( String.substring (#input lexer, s, (e - s))
+      , { input = #input lexer
         , position = e - 1
         , readPosition = e
-        , ch = String.sub (#input l, e)
+        , ch = String.sub (#input lexer, e)
         }
       )
     end
@@ -88,28 +88,28 @@ struct
     | "return" => Return
     | other => Ident other
 
-  fun skipWhitespace (l: LexerT) =
+  fun skipWhitespace lexer =
     let
-      val ch = #ch l
+      val ch = #ch lexer
     in
       if ch = #" " orelse ch = #"\t" orelse ch = #"\n" orelse ch = #"\r" then
-        skipWhitespace (readChar l)
+        skipWhitespace (readChar lexer)
       else
-        l
+        lexer
     end
 
   fun isDigit ch = #"0" <= ch andalso #"9" >= ch
 
-  fun readNumber (l: LexerT) =
+  fun readNumber lexer =
     let
-      val s = #position l
-      val e = scanTill (#input l) (#position l) isDigit
+      val s = #position lexer
+      val e = scanTill (#input lexer) (#position lexer) isDigit
     in
-      ( String.substring (#input l, s, (e - s))
-      , { input = #input l
+      ( String.substring (#input lexer, s, (e - s))
+      , { input = #input lexer
         , position = e - 1
         , readPosition = e
-        , ch = String.sub (#input l, e)
+        , ch = String.sub (#input lexer, e)
         }
       )
     end
@@ -117,9 +117,9 @@ struct
   fun new code =
     readChar ({input = code, position = 0, readPosition = 0, ch = Char.minChar})
 
-  fun nextToken (l: LexerT) =
+  fun nextToken lexer =
     let
-      val l = skipWhitespace l
+      val l = skipWhitespace lexer
       val ch = #ch l
     in
       let
