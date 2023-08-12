@@ -57,14 +57,16 @@ struct
     #"a" <= ch andalso #"z" >= ch orelse #"A" <= ch andalso #"Z" >= ch
     orelse #"_" = ch
 
-  fun scanIdent input index =
-    if isLetter (String.sub (input, index)) then scanIdent input (index + 1)
-    else index
+  fun scanTill input index untilFn =
+    if untilFn (String.sub (input, index)) then
+      scanTill input (index + 1) untilFn
+    else
+      index
 
   fun readIdentifier (l: LexerT) : string * LexerT =
     let
       val s = #position l
-      val e = scanIdent (#input l) s
+      val e = scanTill (#input l) s isLetter
     in
       ( String.substring (#input l, s, (e - s))
       , { input = #input l
@@ -98,14 +100,10 @@ struct
 
   fun isDigit ch = #"0" <= ch andalso #"9" >= ch
 
-  fun scanNumber input index =
-    if isDigit (String.sub (input, index)) then scanNumber input (index + 1)
-    else index
-
   fun readNumber (l: LexerT) : string * LexerT =
     let
       val s = #position l
-      val e = scanNumber (#input l) (#position l)
+      val e = scanTill (#input l) (#position l) isDigit
     in
       ( String.substring (#input l, s, (e - s))
       , { input = #input l
@@ -144,18 +142,18 @@ struct
           | ch =>
               if ch = Char.minChar then
                 (EOF, l)
-              else if isLetter (ch) then
-                let val (ident, l2) = readIdentifier (l)
+              else if isLetter ch then
+                let val (ident, l2) = readIdentifier l
                 in (lookupIdent ident, l2)
                 end
-              else if isDigit (ch) then
-                let val (number, l2) = readNumber (l)
+              else if isDigit ch then
+                let val (number, l2) = readNumber l
                 in (Int number, l2)
                 end
               else
                 (Illegal (Char.toString ch), l)
       in
-        (token, readChar (l'))
+        (token, readChar l')
       end
     end
 end
