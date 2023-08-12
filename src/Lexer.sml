@@ -1,38 +1,5 @@
 structure Lexer =
 struct
-  datatype Token =
-    Illegal of string
-  | EOF
-  (* Identifiers and literals *)
-  | Ident of string
-  | Int of string
-  (* Operators *)
-  | Assign
-  | Plus
-  | Minus
-  | Bang
-  | Asterisk
-  | Slash
-  | LT
-  | GT
-  | Eq
-  | NotEq
-  (* Delimiters *)
-  | Comma
-  | Semicolon
-  | LParen
-  | RParen
-  | LBrace
-  | RBrace
-  (* Keywords *)
-  | Function
-  | Let
-  | True
-  | False
-  | If
-  | Else
-  | Return
-
   type LexerT = {input: string, position: int, readPosition: int, ch: char}
 
   fun readChar lexer =
@@ -79,14 +46,14 @@ struct
 
   fun lookupIdent ident =
     case ident of
-      "fn" => Function
-    | "let" => Let
-    | "true" => True
-    | "false" => False
-    | "if" => If
-    | "else" => Else
-    | "return" => Return
-    | other => Ident other
+      "fn" => Token.Function
+    | "let" => Token.Let
+    | "true" => Token.True
+    | "false" => Token.False
+    | "if" => Token.If
+    | "else" => Token.Else
+    | "return" => Token.Return
+    | other => Token.Ident other
 
   fun skipWhitespace lexer =
     let
@@ -125,33 +92,37 @@ struct
       let
         val (token, l') =
           case ch of
-            #";" => (Semicolon, l)
-          | #"(" => (LParen, l)
-          | #")" => (RParen, l)
-          | #"," => (Comma, l)
-          | #"+" => (Plus, l)
-          | #"-" => (Minus, l)
-          | #"*" => (Asterisk, l)
-          | #"/" => (Slash, l)
-          | #"<" => (LT, l)
-          | #">" => (GT, l)
-          | #"{" => (LBrace, l)
-          | #"}" => (RBrace, l)
-          | #"=" => if peekChar l = #"=" then (Eq, readChar l) else (Assign, l)
-          | #"!" => if peekChar l = #"=" then (NotEq, readChar l) else (Bang, l)
+            #";" => (Token.Semicolon, l)
+          | #"(" => (Token.LParen, l)
+          | #")" => (Token.RParen, l)
+          | #"," => (Token.Comma, l)
+          | #"+" => (Token.Plus, l)
+          | #"-" => (Token.Minus, l)
+          | #"*" => (Token.Asterisk, l)
+          | #"/" => (Token.Slash, l)
+          | #"<" => (Token.LT, l)
+          | #">" => (Token.GT, l)
+          | #"{" => (Token.LBrace, l)
+          | #"}" => (Token.RBrace, l)
+          | #"=" =>
+              if peekChar l = #"=" then (Token.Eq, readChar l)
+              else (Token.Assign, l)
+          | #"!" =>
+              if peekChar l = #"=" then (Token.NotEq, readChar l)
+              else (Token.Bang, l)
           | ch =>
               if ch = Char.minChar then
-                (EOF, l)
+                (Token.EOF, l)
               else if isLetter ch then
                 let val (ident, l2) = readIdentifier l
                 in (lookupIdent ident, l2)
                 end
               else if isDigit ch then
                 let val (number, l2) = readNumber l
-                in (Int number, l2)
+                in (Token.Int number, l2)
                 end
               else
-                (Illegal (Char.toString ch), l)
+                (Token.Illegal (Char.toString ch), l)
       in
         (token, readChar l')
       end
