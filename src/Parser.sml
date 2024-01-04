@@ -1,12 +1,12 @@
 structure Parser =
 struct
 
+  type Expression = {identifier: string, value: string}
+
   datatype Statement =
     LetStatement of {token: Token.Token, identifier: string, value: Expression}
   | FuncStatement
 
-  type Expression = {identifier: string, value: string}
-   
   datatype Node = Statement of Statement | Expression of Expression
   type Program = Statement list
 
@@ -21,7 +21,7 @@ struct
       {lexer = lexer, currTokene = current, peekToken = peek}
     end
 
-  fun nextToken parser =
+  fun nextToken (parser: ParserT) =
     let
       val current = #currToken parser
       val peek = #peekToken parser
