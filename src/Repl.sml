@@ -10,7 +10,7 @@ fun writeTokens output lexer =
   in
     case t of
       Token.EOF => writeLine output "\n"
-    | other =>
+    | _ =>
         ( writeLine output (Token.toString t)
         ; writeLine output " "
         ; writeTokens output l
