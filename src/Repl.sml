@@ -8,7 +8,9 @@ fun writeStatement output stmt =
   (writeLine output (AST.toString stmt); stmt)
 
 fun writeProgram output program =
-  List.map (writeStatement output) program
+  case program of
+  NONE => writeLine output "unable to parse program"
+  | SOME prgrm => (List.map (writeStatement output) prgrm; writeLine output "done")
 
 fun start input output =
   let
