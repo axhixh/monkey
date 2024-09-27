@@ -82,7 +82,7 @@ struct
     end
 
   fun new code =
-    readChar ({input = code, position = 0, readPosition = 0, ch = Char.minChar})
+    readChar {input = code, position = 0, readPosition = 0, ch = Char.minChar}
 
   fun nextToken (lexer: LexerT) =
     let
@@ -110,7 +110,7 @@ struct
           | #"!" =>
               if peekChar l = #"=" then (Token.NotEq, readChar l)
               else (Token.Bang, l)
-          | ch =>
+          | _ =>
               if ch = Char.minChar then
                 (Token.EOF, l)
               else if isLetter ch then
