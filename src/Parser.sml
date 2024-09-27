@@ -39,21 +39,16 @@ struct
 
 
   fun parseLet parser =
-    case (parseIdentifier parser) of
-      NONE => NONE
-    | SOME (identifier, p1) =>
-        case (parseAssign p1) of
-          NONE => NONE
-        | SOME p2 =>
-            let
-              val (v, p3) = parseExpression p2
-            in
-              SOME
-                ( AST.Let
-                    {token = Token.Let, identifier = identifier, value = v}
-                , p3
-                )
-            end
+    let
+      fun build (id, p1) =
+        Option.map
+          (fn p2 =>
+             let val (v, p3) = parseExpression p2
+             in (AST.Let {token = Token.Let, identifier = id, value = v}, p3)
+             end) (parseAssign p1)
+    in
+      Option.mapPartial build (parseIdentifier parser)
+    end
 
   fun parseFunc parser =
     case (parseIdentifier parser) of
