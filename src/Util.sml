@@ -1,5 +1,5 @@
 structure Util =
 struct
 
-  infix |> fun x |> f = f x
+  infix 0 |> fun x |> f = f x
 end
