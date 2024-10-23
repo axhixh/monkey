@@ -8,6 +8,8 @@ struct
   datatype Statement =
     Let of {token: Token.Token, identifier: Identifier, value: Expression}
   | Func of {token: Token.Token, identifier: Identifier}
+  | If of {token: Token.Token, tValue: Expression, fValue: Expression}
+  | Return of {token: Token.Token, value: Expression}
 
   type Program = Statement list
 
@@ -29,4 +31,7 @@ struct
           ]
     | Func {token, identifier} =>
         String.concat [(Token.toString token), " ", (idToString identifier)]
+    | If {token, ...} => String.concat [(Token.toString token), " (todo)"]
+    | Return {token, value} =>
+        String.concat [(Token.toString token), " ", (expToString value)]
 end

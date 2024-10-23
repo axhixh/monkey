@@ -35,6 +35,7 @@ struct
   fun parseExpression parser =
     case (nextToken parser) of
       (Token.Int v, p) => ({identifier = "int", value = v}, p)
+    | (Token.True, p) => ({identifier = "boolean", value = "true"}, p)
     | (t, p) => ({identifier = Token.toString t, value = "(todo)"}, p)
 
 
@@ -48,6 +49,23 @@ struct
              end) (parseAssign p1)
     in
       Option.mapPartial build (parseIdentifier parser)
+    end
+
+  fun parseReturn parser =
+    case (nextToken parser) of
+      (Token.Return, p) =>
+        let val (v, p2) = parseExpression p
+        in SOME (AST.Return {token = Token.Return, value = v}, p2)
+        end
+    | _ => NONE
+
+  fun parseIf parser =
+    let
+      val (_, p) = nextToken parser
+      val (tv, p2) = parseExpression p
+      val (fv, p3) = parseExpression p2
+    in
+      SOME (AST.If {token = Token.If, tValue = tv, fValue = fv}, p3)
     end
 
   fun parseFunc parser =
@@ -69,6 +87,12 @@ struct
         | (Token.Let, p) =>
             Option.mapPartial (fn (stmt, p') => parse p' (stmt :: program))
               (parseLet p)
+        | (Token.Return, p) =>
+            Option.mapPartial (fn (stmt, p') => parse p' (stmt :: program))
+              (parseReturn p)
+        | (Token.If, p) =>
+            Option.mapPartial (fn (stmt, p') => parse p' (stmt :: program))
+              (parseIf p)
         | (Token.Function, p) =>
             Option.mapPartial (fn (stmt, p') => parse p' (stmt :: program))
               (parseFunc p)
