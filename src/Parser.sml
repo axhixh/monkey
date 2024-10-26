@@ -96,7 +96,7 @@ struct
         | (Token.Function, p) =>
             Option.mapPartial (fn (stmt, p') => parse p' (stmt :: program))
               (parseFunc p)
-        | _ => SOME program
+        | (_, p) => parse p program
     in
       Option.map List.rev (parse parser nil)
     end
