@@ -31,12 +31,27 @@ struct
       (Token.Assign, p) => SOME p
     | _ => NONE
 
+  fun parseOperatorExpression parser =
+    {identifier = "todo", value = "operator expression"}
 
   fun parseExpression parser =
-    case (nextToken parser) of
-      (Token.Int v, p) => ({identifier = "int", value = v}, p)
-    | (Token.True, p) => ({identifier = "boolean", value = "true"}, p)
-    | (t, p) => ({identifier = Token.toString t, value = "(todo)"}, p)
+    let
+      val (currentToken, p1) = nextToken parser
+      val peekToken = #peekToken parser
+    in
+      case (currentToken, peekToken) of
+        (Token.Int v, Token.Semicolon) => ({identifier = "int", value = v}, p1)
+      (* or-pattern available only in successorml *)
+      | (Token.Int _, Token.Plus) => (parseOperatorExpression parser, p1)
+      | (Token.Int _, Token.Minus) => (parseOperatorExpression parser, p1)
+      | (Token.True, Token.Semicolon) =>
+          ({identifier = "boolean", value = "true"}, p1)
+      | (Token.False, Token.Semicolon) =>
+          ({identifier = "boolean", value = "false"}, p1)
+      | (Token.LParen, _) =>
+          ({identifier = "todo", value = "paran expression"}, p1)
+      | _ => ({identifier = Token.toString currentToken, value = "(todo)"}, p1)
+    end
 
 
   fun parseLet parser =
