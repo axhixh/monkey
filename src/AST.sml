@@ -13,21 +13,20 @@ struct
 
   type Program = Statement list
 
-  fun idToString {ident, value} =
-    String.concat [(Token.toString ident), " v:", value]
+  fun idToString {ident, value} = String.concat ["ident(", value, ")"]
 
-  fun expToString {identifier, value} = String.concat [identifier, " v:", value]
+  fun expToString {identifier, value} =
+    String.concat [identifier, "`", value, "`"]
 
   fun toString node =
     case node of
       Let {token, identifier, value} =>
         String.concat
-          [ "S -> "
-          , (Token.toString token)
-          , " "
+          [ "S: let "
           , (idToString identifier)
-          , " "
+          , " <- "
           , (expToString value)
+          , ". "
           ]
     | Func {token, identifier} =>
         String.concat [(Token.toString token), " ", (idToString identifier)]
