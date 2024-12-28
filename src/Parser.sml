@@ -119,8 +119,8 @@ struct
             let val (stmt, p') = parseLet p
             in parse p' (stmt :: program)
             end
-        | (Token.Return, p) =>
-            let val (stmt, p') = parseReturn p
+        | (Token.Return, _) =>
+            let val (stmt, p') = parseReturn currentParser
             in parse p' (stmt :: program)
             end
         | (Token.If, p) =>
