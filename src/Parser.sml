@@ -58,11 +58,7 @@ struct
       val peekToken = #peekToken parser
     in
       case (currentToken, peekToken) of
-        (Token.Int v, Token.Semicolon) =>
-          (case (Int.fromString v) of
-             SOME i => (AST.Integer {token = currentToken, value = i}, p1)
-           | NONE => raise ParseException "number expected")
-      (* or-pattern available only in successorml *)
+        (Token.Int _, Token.Semicolon) => parseIntegerLiteral parser
       | (Token.Int _, Token.Plus) => (parseOperatorExpression parser, p1)
       | (Token.Int _, Token.Minus) => (parseOperatorExpression parser, p1)
       | (Token.Int _, Token.Asterisk) => (parseOperatorExpression parser, p1)
@@ -86,12 +82,9 @@ struct
     end
 
   fun parseReturn parser =
-    case (nextToken parser) of
-      (Token.Return, p) =>
-        let val (v, p2) = parseExpression p
-        in (AST.Return {token = Token.Return, value = v}, p2)
-        end
-    | _ => raise ParseException "expected return"
+    let val (v, p) = parseExpression parser
+    in (AST.Return {token = Token.Return, value = v}, p)
+    end
 
   fun parseIf parser =
     let
@@ -110,28 +103,29 @@ struct
       (AST.Func {token = Token.Function, identifier = identifier}, p2)
     end
 
+  fun parseExpressionStatement token parser =
+    raise ParseException
+      (String.concat [Token.toString token, " doesn't support token yet"])
+
+  fun parseStatement token parser =
+    case (token, parser) of
+      (Token.Let, p) => parseLet p
+    | (Token.Return, _) => parseReturn parser
+    | (Token.If, p) => parseIf p
+    | (Token.Function, p) => parseFunc p
+    | (t, p) => parseExpressionStatement t p
+
   fun parseProgram parser =
     let
       fun parse currentParser program =
         case (nextToken currentParser) of
           (Token.EOF, _) => program
-        | (Token.Let, p) =>
-            let val (stmt, p') = parseLet p
+        | (Token.Semicolon, p) => parse p program
+        | (t, p) =>
+            let val (stmt, p') = parseStatement t p
             in parse p' (stmt :: program)
             end
-        | (Token.Return, _) =>
-            let val (stmt, p') = parseReturn currentParser
-            in parse p' (stmt :: program)
-            end
-        | (Token.If, p) =>
-            let val (stmt, p') = parseIf p
-            in parse p' (stmt :: program)
-            end
-        | (Token.Function, p) =>
-            let val (stmt, p') = parseFunc p
-            in parse p' (stmt :: program)
-            end
-        | (_, p) => parse p program
+
     in
       List.rev (parse parser nil)
     end
