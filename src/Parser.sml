@@ -3,7 +3,7 @@ struct
   exception ParseException of string
 
   type ParserT =
-    {lexer: Lexer.LexerT, currToken: Token.Token, peekToken: Token.Token}
+    {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
 
   fun new lexer =
     let

@@ -1,6 +1,6 @@
 structure Token =
 struct
-  datatype Token =
+  datatype T =
     Illegal of string
   | EOF
   (* Identifiers and literals *)
