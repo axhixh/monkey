@@ -1,6 +1,6 @@
 structure Token =
 struct
-  datatype Token =
+  datatype T =
     Illegal of string
   | EOF
   (* Identifiers and literals *)
@@ -36,7 +36,7 @@ struct
   fun toString t =
     case t of
       Illegal s => String.concat ["T:illegal:", s]
-    | EOF => ""
+    | EOF => "<eof>"
     | Ident s => String.concat ["T:ident:", s]
     | Int s => String.concat ["T:int:", s]
     | Assign => "T:="

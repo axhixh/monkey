@@ -2,16 +2,17 @@ structure AST =
 struct
 
   datatype Expression =
-    Identifier of {token: Token.Token, value: string}
-  | Integer of {token: Token.Token, value: int}
-  | Boolean of {token: Token.Token, value: bool}
-  | Operator of {left: Expression, operator: Token.Token, right: Expression}
+    Identifier of {token: Token.T, value: string}
+  | Integer of {token: Token.T, value: int}
+  | Boolean of {token: Token.T, value: bool}
+  | Operator of {left: Expression, operator: Token.T, right: Expression}
 
   datatype Statement =
-    Let of {token: Token.Token, identifier: Expression, value: Expression}
-  | Func of {token: Token.Token, identifier: Expression}
-  | If of {token: Token.Token, tValue: Expression, fValue: Expression}
-  | Return of {token: Token.Token, value: Expression}
+    Let of {token: Token.T, identifier: Expression, value: Expression}
+  | Func of {token: Token.T, identifier: Expression}
+  | If of {token: Token.T, tValue: Expression, fValue: Expression}
+  | Return of {token: Token.T, value: Expression}
+  | ExpressionStatement of {token: Token.T, value: Expression}
 
   type Program = Statement list
 
@@ -43,8 +44,10 @@ struct
           , ". "
           ]
     | Func {token, identifier} =>
-        String.concat [(Token.toString token), " ", (expToString identifier)]
-    | If {token, ...} => String.concat [(Token.toString token), " (todo)"]
+        String.concat [Token.toString token, " ", (expToString identifier)]
+    | If {token, ...} => String.concat [Token.toString token, " (todo)"]
     | Return {token, value} =>
-        String.concat [(Token.toString token), " ", (expToString value)]
+        String.concat [Token.toString token, " ", expToString value]
+    | ExpressionStatement {token, value} =>
+        String.concat [Token.toString token, " ", expToString value]
 end
