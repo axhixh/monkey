@@ -12,6 +12,7 @@ struct
   | Func of {token: Token.Token, identifier: Expression}
   | If of {token: Token.Token, tValue: Expression, fValue: Expression}
   | Return of {token: Token.Token, value: Expression}
+  | ExpressionStatement of {token: Token.Token, value: Expression}
 
   type Program = Statement list
 
@@ -43,8 +44,10 @@ struct
           , ". "
           ]
     | Func {token, identifier} =>
-        String.concat [(Token.toString token), " ", (expToString identifier)]
-    | If {token, ...} => String.concat [(Token.toString token), " (todo)"]
+        String.concat [Token.toString token, " ", (expToString identifier)]
+    | If {token, ...} => String.concat [Token.toString token, " (todo)"]
     | Return {token, value} =>
-        String.concat [(Token.toString token), " ", (expToString value)]
+        String.concat [Token.toString token, " ", expToString value]
+    | ExpressionStatement {token, value} =>
+        String.concat [Token.toString token, " ", expToString value]
 end
