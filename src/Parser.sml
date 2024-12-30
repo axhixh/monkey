@@ -2,8 +2,7 @@ structure Parser =
 struct
   exception ParseException of string
 
-  type ParserT =
-    {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
+  type ParserT = {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
 
   fun new lexer =
     let
@@ -21,6 +20,49 @@ struct
     in
       (current, {lexer = lexer, currToken = peek, peekToken = next})
     end
+
+  datatype Precedence =
+    Lowest
+  | Equals
+  | LessGreater
+  | Sum
+  | Product
+  | Prefix
+  | Call
+
+  fun precedences token =
+    case token of
+      Token.Eq => Equals
+    | Token.NotEq => Equals
+    | Token.LT => LessGreater
+    | Token.GT => LessGreater
+    | Token.Plus => Sum
+    | Token.Minus => Sum
+    | Token.Slash => Product
+    | Token.Asterisk => Product
+    | _ => Lowest
+
+  fun compare p1 p2 =
+    let
+      fun ordinal p =
+        case p of
+          Lowest => 1
+        | Equals => 2
+        | LessGreater => 3
+        | Sum => 4
+        | Product => 5
+        | Prefix => 6
+        | Call => 7
+      val o1 = ordinal p1
+      val o2 = ordinal p2
+    in
+      o1 - o2
+    end
+
+  fun prefixParseFns token =
+    case token of
+      Token.Plus => raise ParseException "not implemented"
+    | _ => raise ParseException "prefix parse function not implemented"
 
 
   fun parseIdentifier parser =
@@ -108,12 +150,12 @@ struct
       (String.concat [Token.toString token, " doesn't support token yet"])
 
   fun parseStatement token parser =
-    case (token, parser) of
-      (Token.Let, p) => parseLet p
-    | (Token.Return, _) => parseReturn parser
-    | (Token.If, p) => parseIf p
-    | (Token.Function, p) => parseFunc p
-    | (t, p) => parseExpressionStatement t p
+    case token of
+      Token.Let => parseLet parser
+    | Token.Return => parseReturn parser
+    | Token.If => parseIf parser
+    | Token.Function => parseFunc parser
+    | t => parseExpressionStatement t parser
 
   fun parseProgram parser =
     let

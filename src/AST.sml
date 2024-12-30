@@ -18,12 +18,9 @@ struct
 
   fun expToString expression =
     case expression of
-      Identifier {token, value} =>
-        String.concat [Token.toString token, " ", value, " "]
-    | Boolean {token, value} =>
-        String.concat [Token.toString token, " ", Bool.toString value, " "]
-    | Integer {token, value} =>
-        String.concat [(Token.toString token), "`", (Int.toString value), "`"]
+      Identifier {token, value} => value
+    | Boolean {token, value} => Bool.toString value
+    | Integer {token, value} => Int.toString value
     | Operator {left, operator, right} =>
         String.concat
           [ (expToString left)
@@ -37,17 +34,17 @@ struct
     case node of
       Let {token, identifier, value} =>
         String.concat
-          [ "S: let "
+          [ "let "
           , (expToString identifier)
-          , " <- "
+          , " = "
           , (expToString value)
-          , ". "
+          , ";\n"
           ]
     | Func {token, identifier} =>
         String.concat [Token.toString token, " ", (expToString identifier)]
     | If {token, ...} => String.concat [Token.toString token, " (todo)"]
     | Return {token, value} =>
-        String.concat [Token.toString token, " ", expToString value]
+        String.concat ["return ", expToString value, ";\n"]
     | ExpressionStatement {token, value} =>
         String.concat [Token.toString token, " ", expToString value]
 end
