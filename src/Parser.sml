@@ -74,11 +74,11 @@ struct
       (Token.Assign, p) => p
     | _ => raise ParseException "unable to parse assign"
 
-  fun parseIntegerLiteral parser =
-    case (nextToken parser) of
-      (Token.Int v, p) =>
+  fun parseIntegerLiteral token parser =
+    case token of
+      Token.Int v =>
         (case (Int.fromString v) of
-           SOME i => (AST.Integer {token = Token.Int v, value = i}, p)
+           SOME i => (AST.Integer {token = token, value = i}, parser)
          | NONE => raise ParseException "expected a number")
     | _ => raise ParseException "unable to parse integer"
 
@@ -98,7 +98,7 @@ struct
       val peekToken = #peekToken parser
     in
       case (currentToken, peekToken) of
-        (Token.Int _, Token.Semicolon) => parseIntegerLiteral parser
+        (Token.Int _, Token.Semicolon) => parseIntegerLiteral currentToken p1
       | (Token.Int _, Token.Plus) => (parseOperatorExpression parser, p1)
       | (Token.Int _, Token.Minus) => (parseOperatorExpression parser, p1)
       | (Token.Int _, Token.Asterisk) => (parseOperatorExpression parser, p1)
@@ -119,6 +119,7 @@ struct
   fun prefixParseFn token =
     case token of
       Token.Ident _ => parseIdentifier
+    | Token.Int _ => parseIntegerLiteral
     | _ => raise ParseException "unknown token for prefix parse function"
 
   fun infixParseFn token =
