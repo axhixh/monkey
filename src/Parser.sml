@@ -59,17 +59,15 @@ struct
       o1 - o2
     end
 
-  fun prefixParseFns token =
-    case token of
-      Token.Plus => raise ParseException "not implemented"
-    | _ => raise ParseException "prefix parse function not implemented"
-
-
-  fun parseIdentifier parser =
-    case (nextToken parser) of
-      (Token.Ident i, p) =>
-        (AST.Identifier {token = Token.Ident i, value = i}, p)
-    | _ => raise ParseException "unable to parse identifier"
+  fun parseIdentifier token parser =
+    case (token, parser) of
+      (Token.Ident i, p) => (AST.Identifier {token = token, value = i}, p)
+    | _ =>
+        raise ParseException
+          (String.concat
+             [ "unexpected token while parsing identifier "
+             , Token.toString token
+             ])
 
   fun parseAssign parser =
     case (nextToken parser) of
@@ -113,10 +111,26 @@ struct
       | _ => raise ParseException "unable to parse, unknown token"
     end
 
+  (* the book uses a map parse functions for each token,
+   * methods to register them. we are going to use lookup
+   * functions and code the parse functions to token using
+   * case statement
+   *)
+  fun prefixParseFn token =
+    case token of
+      Token.Ident _ => parseIdentifier
+    | _ => raise ParseException "unknown token for prefix parse function"
+
+  fun infixParseFn token =
+    case token of
+      Token.Plus => raise ParseException "not implementd"
+    | Token.Minus => raise ParseException "not implemented"
+    | _ => raise ParseException "unknown token for infix parse function"
 
   fun parseLet parser =
     let
-      val (identifier, p1) = parseIdentifier parser
+      val (token, p) = nextToken parser
+      val (identifier, p1) = parseIdentifier token p
       val p2 = parseAssign p1
       val (value, p3) = parseExpression p2
     in
@@ -139,15 +153,20 @@ struct
 
   fun parseFunc parser =
     let
-      val (identifier, p1) = parseIdentifier parser
+      val (token, p) = nextToken parser
+      val (identifier, p1) = parseIdentifier token p
       val p2 = parseAssign p1
     in
       (AST.Func {token = Token.Function, identifier = identifier}, p2)
     end
 
   fun parseExpressionStatement token parser =
-    raise ParseException
-      (String.concat [Token.toString token, " doesn't support token yet"])
+    let
+      val prefixFn = prefixParseFn token
+      val (prefix, p) = prefixFn token parser
+    in
+      (AST.ExpressionStatement {token = token, value = prefix}, p)
+    end
 
   fun parseStatement token parser =
     case token of
