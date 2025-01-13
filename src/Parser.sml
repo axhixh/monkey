@@ -82,6 +82,15 @@ struct
          | NONE => raise ParseException "expected a number")
     | _ => raise ParseException "unable to parse integer"
 
+  fun parseBooleanLiteral token parser =
+    case token of
+      Token.True => (AST.Boolean {token = token, value = true}, parser)
+    | Token.False => (AST.Boolean {token = token, value = false}, parser)
+    | _ =>
+        raise ParseException
+          (String.concat
+             ["expected boolean literal, got ", Token.toString token])
+
   fun parseOperatorExpression parser =
     let val (token, p1) = nextToken parser
     in raise ParseException "to do"
@@ -92,7 +101,7 @@ struct
     in raise ParseException "to do"
     end
 
-  fun parseExpression parser =
+  fun parseExpression precedence parser =
     let
       val (currentToken, p1) = nextToken parser
       val peekToken = #peekToken parser
@@ -111,6 +120,20 @@ struct
       | _ => raise ParseException "unable to parse, unknown token"
     end
 
+  fun parsePrefixExpression token parser =
+    let
+      val (rightToken, p1) = nextToken parser
+      val (rightExpression, p2) = parseExpression Prefix p1
+    in
+      ( AST.PrefixExpression
+          { token = token
+          , operator = Token.toString token
+          , right = rightExpression
+          }
+      , p2
+      )
+    end
+
   (* the book uses a map parse functions for each token,
    * methods to register them. we are going to use lookup
    * functions and code the parse functions to token using
@@ -120,6 +143,10 @@ struct
     case token of
       Token.Ident _ => parseIdentifier
     | Token.Int _ => parseIntegerLiteral
+    | Token.False => parseBooleanLiteral
+    | Token.True => parseBooleanLiteral
+    | Token.Bang => parsePrefixExpression
+    | Token.Minus => parsePrefixExpression
     | _ => raise ParseException "unknown token for prefix parse function"
 
   fun infixParseFn token =
@@ -133,21 +160,21 @@ struct
       val (token, p) = nextToken parser
       val (identifier, p1) = parseIdentifier token p
       val p2 = parseAssign p1
-      val (value, p3) = parseExpression p2
+      val (value, p3) = parseExpression Lowest p2
     in
       (AST.Let {token = Token.Let, identifier = identifier, value = value}, p3)
     end
 
   fun parseReturn parser =
-    let val (v, p) = parseExpression parser
+    let val (v, p) = parseExpression Lowest parser
     in (AST.Return {token = Token.Return, value = v}, p)
     end
 
   fun parseIf parser =
     let
       val (_, p) = nextToken parser
-      val (tv, p2) = parseExpression p
-      val (fv, p3) = parseExpression p2
+      val (tv, p2) = parseExpression Lowest p
+      val (fv, p3) = parseExpression Lowest p2
     in
       (AST.If {token = Token.If, tValue = tv, fValue = fv}, p3)
     end

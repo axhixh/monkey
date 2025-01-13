@@ -5,7 +5,7 @@ struct
     Identifier of {token: Token.T, value: string}
   | Integer of {token: Token.T, value: int}
   | Boolean of {token: Token.T, value: bool}
-  | Operator of {left: Expression, operator: Token.T, right: Expression}
+  | PrefixExpression of {token: Token.T, operator: string, right: Expression}
 
   datatype Statement =
     Let of {token: Token.T, identifier: Expression, value: Expression}
@@ -21,25 +21,14 @@ struct
       Identifier {token, value} => value
     | Boolean {token, value} => Bool.toString value
     | Integer {token, value} => Int.toString value
-    | Operator {left, operator, right} =>
-        String.concat
-          [ (expToString left)
-          , " "
-          , (Token.toString operator)
-          , " "
-          , (expToString right)
-          ]
+    | PrefixExpression {token, operator, right} =>
+        String.concat ["(", operator, expToString right, ")"]
 
   fun toString node =
     case node of
       Let {token, identifier, value} =>
         String.concat
-          [ "let "
-          , (expToString identifier)
-          , " = "
-          , (expToString value)
-          , ";\n"
-          ]
+          ["let ", (expToString identifier), " = ", (expToString value), ";\n"]
     | Func {token, identifier} =>
         String.concat [Token.toString token, " ", (expToString identifier)]
     | If {token, ...} => String.concat [Token.toString token, " (todo)"]
