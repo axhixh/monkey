@@ -2,7 +2,7 @@ structure AssocList =
 struct
   type ('key, 'value) T = ('key * 'value) list
 
-  fun add (key, value) list = (key, value) :: list
+  fun add (key, value) alist = (key, value) :: alist
 
   (* find the value associated with the key. finds the first instance
    *  of the key so the most recent addition.
@@ -20,8 +20,8 @@ struct
   (* update the value of the most recent instance of the key.
   * adds the value if it isn't present
   *)
-  fun update key value [] = [(key, value)]
-    | update key value ((k, v) :: rest) =
+  fun update (key, value) [] = [(key, value)]
+    | update (key, value) ((k, v) :: rest) =
         if key = k then (key, value) :: rest
-        else (k, v) :: update key value rest
+        else (k, v) :: update (key, value) rest
 end

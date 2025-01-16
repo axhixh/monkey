@@ -1,3 +1,4 @@
+src/AssocList.sml
 src/Util.sml
 src/Token.sml
 src/Lexer.sml
