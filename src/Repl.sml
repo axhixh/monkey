@@ -8,7 +8,7 @@ fun writeStatement output stmt =
   (writeLine output (AST.toString stmt); stmt)
 
 fun writeProgram output program =
-  (List.map (writeStatement output) program; writeLine output "done")
+  (List.map (writeStatement output) program; writeLine output "\n")
 
 fun start input output =
   let
@@ -25,5 +25,6 @@ val _ =
     val output = TextIO.stdOut
     val input = TextIO.stdIn
   in
-    (writeLine output "Starting Monkey REPL\n"; start input output)
+    writeLine output "Starting Monkey REPL\n";
+    while true do (start input output)
   end

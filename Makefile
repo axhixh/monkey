@@ -5,6 +5,7 @@ clean:
 
 AssocList.uo: src/AssocList.sml
 	mosmlc -c $<
+
 AssocListTest: src/AssocListTest.sml AssocList.uo
 	mkdir -p bin
 	mosmlc -standalone -o bin/assoc-list-test -I src $< 
