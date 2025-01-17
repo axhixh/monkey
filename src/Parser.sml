@@ -2,7 +2,7 @@ structure Parser =
 struct
   exception ParseException of string
 
-  type ParserT = {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
+  type T = {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
 
   fun new lexer =
     let
@@ -12,7 +12,7 @@ struct
       {lexer = lexer, currToken = current, peekToken = peek}
     end
 
-  fun nextToken (parser: ParserT) =
+  fun nextToken (parser: T) =
     let
       val current = #currToken parser
       val peek = #peekToken parser
@@ -59,22 +59,39 @@ struct
       o1 - o2
     end
 
-  fun parseIdentifier token parser =
+  (* the book uses a map parse functions for each token,
+   * methods to register them. we are going to use lookup
+   * functions and code the parse functions to token using
+   * case statement
+   *)
+  fun prefixParseFn token =
+    case token of
+      Token.Ident _ => SOME parseIdentifier
+    | Token.Int _ => SOME parseIntegerLiteral
+    | Token.False => SOME parseBooleanLiteral
+    | Token.True => SOME parseBooleanLiteral
+    | Token.Bang => SOME parsePrefixExpression
+    | Token.Minus => SOME parsePrefixExpression
+    | _ => NONE
+
+  and infixParseFn token =
+    case token of
+      Token.Plus => raise ParseException "not implementd"
+    | Token.Minus => raise ParseException "not implemented"
+    | _ => raise ParseException "unknown token for infix parse function"
+
+  and parseIdentifier token parser =
     case (token, parser) of
       (Token.Ident i, p) => (AST.Identifier {token = token, value = i}, p)
     | _ =>
         raise ParseException
           (String.concat
              [ "unexpected token while parsing identifier "
+
              , Token.toString token
              ])
 
-  fun parseAssign parser =
-    case (nextToken parser) of
-      (Token.Assign, p) => p
-    | _ => raise ParseException "unable to parse assign"
-
-  fun parseIntegerLiteral token parser =
+  and parseIntegerLiteral token parser =
     case token of
       Token.Int v =>
         (case (Int.fromString v) of
@@ -82,7 +99,7 @@ struct
          | NONE => raise ParseException "expected a number")
     | _ => raise ParseException "unable to parse integer"
 
-  fun parseBooleanLiteral token parser =
+  and parseBooleanLiteral token parser =
     case token of
       Token.True => (AST.Boolean {token = token, value = true}, parser)
     | Token.False => (AST.Boolean {token = token, value = false}, parser)
@@ -91,30 +108,30 @@ struct
           (String.concat
              ["expected boolean literal, got ", Token.toString token])
 
-  fun parseOperatorExpression parser =
+  and parseOperatorExpression parser =
     let val (token, p1) = nextToken parser
     in raise ParseException "to do"
     end
 
-  fun parseGroupedExpression parser =
+  and parseGroupedExpression parser =
     let val (token, p1) = nextToken parser
     in raise ParseException "to do"
     end
 
-  fun parseExpression precedence token parser =
-      case token of
-        Token.Int _ => parseIntegerLiteral token parser
-      | Token.True => parseBooleanLiteral token parser
-      | Token.False => parseBooleanLiteral token parser
-      | Token.LParen => parseGroupedExpression parser
-      | _ =>
-          raise ParseException
-            (String.concat
-               [ "unable to parse expression, unexpected token "
-               , Token.toString token
-               ])
+  and parseExpression precedence token parser =
+    case token of
+      Token.Int _ => parseIntegerLiteral token parser
+    | Token.True => parseBooleanLiteral token parser
+    | Token.False => parseBooleanLiteral token parser
+    | Token.LParen => parseGroupedExpression parser
+    | _ =>
+        raise ParseException
+          (String.concat
+             [ "unable to parse expression, unexpected token "
+             , Token.toString token
+             ])
 
-  fun parsePrefixExpression token parser =
+  and parsePrefixExpression token parser =
     let
       val (rightToken, p1) = nextToken parser
       val (rightExpression, p2) = parseExpression Prefix rightToken p1
@@ -128,26 +145,10 @@ struct
       )
     end
 
-  (* the book uses a map parse functions for each token,
-   * methods to register them. we are going to use lookup
-   * functions and code the parse functions to token using
-   * case statement
-   *)
-  fun prefixParseFn token =
-    case token of
-      Token.Ident _ => parseIdentifier
-    | Token.Int _ => parseIntegerLiteral
-    | Token.False => parseBooleanLiteral
-    | Token.True => parseBooleanLiteral
-    | Token.Bang => parsePrefixExpression
-    | Token.Minus => parsePrefixExpression
-    | _ => raise ParseException "unknown token for prefix parse function"
-
-  fun infixParseFn token =
-    case token of
-      Token.Plus => raise ParseException "not implementd"
-    | Token.Minus => raise ParseException "not implemented"
-    | _ => raise ParseException "unknown token for infix parse function"
+  fun parseAssign parser =
+    case (nextToken parser) of
+      (Token.Assign, p) => p
+    | _ => raise ParseException "unable to parse assign"
 
   fun parseLet parser =
     let
@@ -169,12 +170,15 @@ struct
     end
 
   fun parseExpressionStatement token parser =
-    let
-      val prefixFn = prefixParseFn token
-      val (prefix, p) = prefixFn token parser
-    in
-      (AST.ExpressionStatement {token = token, value = prefix}, p)
-    end
+    case (prefixParseFn token) of
+      NONE =>
+        raise ParseException
+          (String.concat
+             ["didn't find prefix parse function for ", Token.toString token])
+    | SOME prefixFn =>
+        let val (prefix, p) = prefixFn token parser
+        in (AST.ExpressionStatement {token = token, value = prefix}, p)
+        end
 
   fun parseStatement token parser =
     case token of
