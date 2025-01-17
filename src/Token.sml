@@ -35,10 +35,10 @@ struct
 
   fun toString t =
     case t of
-      Illegal s => String.concat ["T:illegal:", s]
+      Illegal s => "T:illegal:" ^ s
     | EOF => "<eof>"
-    | Ident s => String.concat ["T:ident:", s]
-    | Int s => String.concat ["T:int:", s]
+    | Ident s => "T:ident:" ^ s
+    | Int s => "T:int:" ^ s
     | Assign => "T:="
     | Plus => "T:+"
     | Minus => "T:-"
