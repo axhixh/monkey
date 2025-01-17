@@ -22,18 +22,16 @@ struct
     | Boolean {token, value} => Bool.toString value
     | Integer {token, value} => Int.toString value
     | PrefixExpression {token, operator, right} =>
-        String.concat ["(", operator, expToString right, ")"]
+        "(" ^ operator ^ (expToString right) ^ ")"
 
   fun toString node =
     case node of
       Let {token, identifier, value} =>
-        String.concat
-          ["let ", (expToString identifier), " = ", (expToString value), ";\n"]
+        "let " ^ (expToString identifier) ^ " = " ^ (expToString value) ^ ";\n"
     | Func {token, identifier} =>
-        String.concat [Token.toString token, " ", (expToString identifier)]
-    | If {token, ...} => String.concat [Token.toString token, " (todo)"]
-    | Return {token, value} =>
-        String.concat ["return ", expToString value, ";\n"]
+        (Token.toString token) ^ " " ^ (expToString identifier)
+    | If {token, ...} => (Token.toString token) ^ " (todo)"
+    | Return {token, value} => "return " ^ (expToString value) ^ ";\n"
     | ExpressionStatement {token, value} =>
-        String.concat [Token.toString token, " ", expToString value]
+        (Token.toString token) ^ " " ^ (expToString value)
 end

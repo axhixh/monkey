@@ -85,11 +85,7 @@ struct
       (Token.Ident i, p) => (AST.Identifier {token = token, value = i}, p)
     | _ =>
         raise ParseException
-          (String.concat
-             [ "unexpected token while parsing identifier "
-
-             , Token.toString token
-             ])
+          ("unexpected token while parsing identifier " ^ (Token.toString token))
 
   and parseIntegerLiteral token parser =
     case token of
@@ -105,8 +101,7 @@ struct
     | Token.False => (AST.Boolean {token = token, value = false}, parser)
     | _ =>
         raise ParseException
-          (String.concat
-             ["expected boolean literal, got ", Token.toString token])
+          ("expected boolean literal, got " ^ (Token.toString token))
 
   and parseOperatorExpression parser =
     let val (token, p1) = nextToken parser
@@ -126,10 +121,8 @@ struct
     | Token.LParen => parseGroupedExpression parser
     | _ =>
         raise ParseException
-          (String.concat
-             [ "unable to parse expression, unexpected token "
-             , Token.toString token
-             ])
+          ("unable to parse expression, unexpected token "
+           ^ (Token.toString token))
 
   and parsePrefixExpression token parser =
     let
@@ -173,8 +166,7 @@ struct
     case (prefixParseFn token) of
       NONE =>
         raise ParseException
-          (String.concat
-             ["didn't find prefix parse function for ", Token.toString token])
+          ("didn't find prefix parse function for " ^ (Token.toString token))
     | SOME prefixFn =>
         let val (prefix, p) = prefixFn token parser
         in (AST.ExpressionStatement {token = token, value = prefix}, p)
