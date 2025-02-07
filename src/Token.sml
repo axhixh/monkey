@@ -35,31 +35,31 @@ struct
 
   fun toString t =
     case t of
-      Illegal s => "T:illegal:" ^ s
+      Illegal s => "illegal: " ^ s
     | EOF => "<eof>"
-    | Ident s => "T:ident:" ^ s
-    | Int s => "T:int:" ^ s
-    | Assign => "T:="
-    | Plus => "T:+"
-    | Minus => "T:-"
-    | Bang => "T:!"
-    | Asterisk => "T:*"
-    | Slash => "T:/"
-    | LT => "T:<"
-    | GT => "T:>"
-    | Eq => "T:=="
-    | NotEq => "T:!="
-    | Comma => "T:,"
-    | Semicolon => "T:;"
-    | LParen => "T:("
-    | RParen => "T:)"
-    | LBrace => "T:{"
-    | RBrace => "T:}"
-    | Function => "T:function"
-    | Let => "T:let"
-    | True => "T:true"
-    | False => "T:false"
-    | If => "T:if"
-    | Else => "T:else"
-    | Return => "T:return"
+    | Ident s => "ident: " ^ s
+    | Int s => "int: " ^ s
+    | Assign => "="
+    | Plus => "+"
+    | Minus => "-"
+    | Bang => "!"
+    | Asterisk => "*"
+    | Slash => "/"
+    | LT => "<"
+    | GT => ">"
+    | Eq => "=="
+    | NotEq => "!="
+    | Comma => ","
+    | Semicolon => ";"
+    | LParen => "("
+    | RParen => ")"
+    | LBrace => "{"
+    | RBrace => "}"
+    | Function => "function"
+    | Let => "let"
+    | True => "true"
+    | False => "false"
+    | If => "if"
+    | Else => "else"
+    | Return => "return"
 end
