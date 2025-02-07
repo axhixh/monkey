@@ -2,9 +2,11 @@ structure AST =
 struct
 
   datatype Expression =
-    Identifier of {token: Token.T, value: string}
+    Boolean of {token: Token.T, value: bool}
+  | Identifier of {token: Token.T, value: string}
+  | InfixExpression of
+      {token: Token.T, left: Expression, operator: string, right: Expression}
   | Integer of {token: Token.T, value: int}
-  | Boolean of {token: Token.T, value: bool}
   | PrefixExpression of {token: Token.T, operator: string, right: Expression}
 
   datatype Statement =
@@ -18,8 +20,11 @@ struct
 
   fun expToString expression =
     case expression of
-      Identifier {token, value} => value
-    | Boolean {token, value} => Bool.toString value
+      Boolean {token, value} => Bool.toString value
+    | Identifier {token, value} => value
+    | InfixExpression {token, left, operator, right} =>
+        "(" ^ (expToString left) ^ " " ^ operator ^ " " ^ (expToString right)
+        ^ ")"
     | Integer {token, value} => Int.toString value
     | PrefixExpression {token, operator, right} =>
         "(" ^ operator ^ (expToString right) ^ ")"
