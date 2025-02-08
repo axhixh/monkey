@@ -87,14 +87,14 @@ struct
     | Token.GT => SOME parseInfixExpression
     | _ => NONE
 
-  and parseIdentifier token parser =
+  and parseIdentifier (token, parser) =
     case (token, parser) of
       (Token.Ident i, p) => (AST.Identifier {token = token, value = i}, p)
     | _ =>
         raise ParseException
           ("unexpected token while parsing identifier " ^ (Token.toString token))
 
-  and parseIntegerLiteral token parser =
+  and parseIntegerLiteral (token, parser) =
     case token of
       Token.Int v =>
         (case (Int.fromString v) of
@@ -102,7 +102,7 @@ struct
          | NONE => raise ParseException "expected a number")
     | _ => raise ParseException "unable to parse integer"
 
-  and parseBooleanLiteral token parser =
+  and parseBooleanLiteral (token, parser) =
     case token of
       Token.True => (AST.Boolean {token = token, value = true}, parser)
     | Token.False => (AST.Boolean {token = token, value = false}, parser)
@@ -120,7 +120,7 @@ struct
     in raise ParseException "to do"
     end
 
-  and parseExpression precedence token parser =
+  and parseExpression precedence (token, parser) =
     let
       fun loop lExp lPrecedence lParser =
         let
@@ -132,7 +132,7 @@ struct
             case (infixParseFn t1) of
               NONE => (lExp, lParser)
             | SOME infixFn =>
-                let val (lExp2, p2) = infixFn lExp t1 p1
+                let val (lExp2, p2) = infixFn lExp (t1, p1)
                 in loop lExp2 lPrecedence p2
                 end
           else
@@ -144,30 +144,27 @@ struct
           raise ParseException
             ("didn't find prefix parse function for " ^ (Token.toString token))
       | SOME prefixFn =>
-          let val (leftExp, p1: T) = prefixFn token parser
+          let val (leftExp, p1: T) = prefixFn (token, parser)
           in loop leftExp precedence p1
           end
     end
 
-  and parsePrefixExpression token parser =
+  and parsePrefixExpression (token, parser) =
     let
-      val (rightToken, p1) = nextToken parser
-      val (rightExpression, p2) = parseExpression Prefix rightToken p1
+      val (rightExpression, p1) = parseExpression Prefix (nextToken parser)
     in
       ( AST.PrefixExpression
           { token = token
           , operator = Token.toString token
           , right = rightExpression
           }
-      , p2
+      , p1
       )
     end
 
-  and parseInfixExpression leftExp token parser =
+  and parseInfixExpression leftExp (token, parser) =
     let
-      val precedence = precedences token
-      val (rightToken, p1) = nextToken parser
-      val (rightExp, p2) = parseExpression precedence rightToken p1
+      val (rightExp, p) = parseExpression (precedences token) (nextToken parser)
     in
       ( AST.InfixExpression
           { token = token
@@ -175,7 +172,7 @@ struct
           , left = leftExp
           , right = rightExp
           }
-      , p2
+      , p
       )
     end
 
@@ -186,33 +183,28 @@ struct
 
   fun parseLet parser =
     let
-      val (token, p) = nextToken parser
-      val (identifier, p1) = parseIdentifier token p
+      val (identifier, p1) = parseIdentifier (nextToken parser)
       val p2 = parseAssign p1
-      val (next, p3) = nextToken p2
-      val (value, p4) = parseExpression Lowest next p3
+      val (value, p3) = parseExpression Lowest (nextToken p2)
     in
-      (AST.Let {token = Token.Let, identifier = identifier, value = value}, p4)
+      (AST.Let {token = Token.Let, identifier = identifier, value = value}, p3)
     end
 
   fun parseReturn parser =
-    let
-      val (t, p) = nextToken parser
-      val (v, p1) = parseExpression Lowest t p
-    in
-      (AST.Return {token = Token.Return, value = v}, p1)
+    let val (v, p1) = parseExpression Lowest (nextToken parser)
+    in (AST.Return {token = Token.Return, value = v}, p1)
     end
 
-  fun parseExpressionStatement token parser =
-    let val (expression, p) = parseExpression Lowest token parser
+  fun parseExpressionStatement (token, parser) =
+    let val (expression, p) = parseExpression Lowest (token, parser)
     in (AST.ExpressionStatement {token = token, value = expression}, p)
     end
 
-  fun parseStatement token parser =
+  fun parseStatement (token, parser) =
     case token of
       Token.Let => parseLet parser
     | Token.Return => parseReturn parser
-    | t => parseExpressionStatement t parser
+    | t => parseExpressionStatement (t, parser)
 
   fun parseProgram parser =
     let
@@ -221,7 +213,7 @@ struct
           (Token.EOF, _) => program
         | (Token.Semicolon, p) => parse p program
         | (t, p) =>
-            let val (stmt, p') = parseStatement t p
+            let val (stmt, p') = parseStatement (t, p)
             in parse p' (stmt :: program)
             end
     in
