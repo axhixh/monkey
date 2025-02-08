@@ -145,7 +145,7 @@ struct
             ("didn't find prefix parse function for " ^ (Token.toString token))
       | SOME prefixFn =>
           let val (leftExp, p1: T) = prefixFn token parser
-          in loop leftExp precedence parser
+          in loop leftExp precedence p1
           end
     end
 
