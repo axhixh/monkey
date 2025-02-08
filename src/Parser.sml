@@ -116,7 +116,8 @@ struct
       val (exp, p1) = parseExpression Lowest (nextToken parser)
       val (t2, p2) = nextToken p1
     in
-      if Token.RParen = t2 then (exp, p2) else raise ParseException "to do"
+      if Token.RParen = t2 then (exp, p2)
+      else raise ParseException ("expected )but got " ^ (Token.toString t2))
     end
 
   and parseExpression precedence (token, parser) =
