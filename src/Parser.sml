@@ -73,6 +73,7 @@ struct
     | Token.True => SOME parseBooleanLiteral
     | Token.Bang => SOME parsePrefixExpression
     | Token.Minus => SOME parsePrefixExpression
+    | Token.LParen => SOME parseGroupedExpression
     | _ => NONE
 
   and infixParseFn token =
@@ -110,14 +111,12 @@ struct
         raise ParseException
           ("expected boolean literal, got " ^ (Token.toString token))
 
-  and parseOperatorExpression parser =
-    let val (token, p1) = nextToken parser
-    in raise ParseException "to do"
-    end
-
-  and parseGroupedExpression parser =
-    let val (token, p1) = nextToken parser
-    in raise ParseException "to do"
+  and parseGroupedExpression (token, parser) =
+    let
+      val (exp, p1) = parseExpression Lowest (nextToken parser)
+      val (t2, p2) = nextToken p1
+    in
+      if Token.RParen = t2 then (exp, p2) else raise ParseException "to do"
     end
 
   and parseExpression precedence (token, parser) =
