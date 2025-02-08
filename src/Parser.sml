@@ -120,24 +120,33 @@ struct
     end
 
   and parseExpression precedence token parser =
-    case (prefixParseFn token) of
-      NONE =>
-        raise ParseException
-          ("didn't find prefix parse function for " ^ (Token.toString token))
-    | SOME prefixFn =>
+    let
+      fun loop lExp lPrecedence lParser =
         let
-          val (leftExp, p1: T) = prefixFn token parser
-          val (t2, p2) = nextToken p1
-          val precedenceDiff = compare precedence (precedences t2)
-          val parseMore = Token.Semicolon <> t2 andalso precedenceDiff < 0
+          val (t1, p1) = nextToken lParser
+          val precedenceDiff = compare lPrecedence (precedences t1)
+          val parseMore = Token.Semicolon <> t1 andalso precedenceDiff < 0
         in
           if parseMore then
-            case (infixParseFn t2) of
-              NONE => (leftExp, p1)
-            | SOME infixFn => infixFn leftExp t2 p2
+            case (infixParseFn t1) of
+              NONE => (lExp, lParser)
+            | SOME infixFn =>
+                let val (lExp2, p2) = infixFn lExp t1 p1
+                in loop lExp2 lPrecedence p2
+                end
           else
-            (leftExp, p1)
+            (lExp, lParser)
         end
+    in
+      case (prefixParseFn token) of
+        NONE =>
+          raise ParseException
+            ("didn't find prefix parse function for " ^ (Token.toString token))
+      | SOME prefixFn =>
+          let val (leftExp, p1: T) = prefixFn token parser
+          in loop leftExp precedence parser
+          end
+    end
 
   and parsePrefixExpression token parser =
     let
@@ -146,7 +155,7 @@ struct
     in
       ( AST.PrefixExpression
           { token = token
-          , operator = if Token.Minus = token then "-" else "!"
+          , operator = Token.toString token
           , right = rightExpression
           }
       , p2

@@ -37,6 +37,5 @@ struct
         (Token.toString token) ^ " " ^ (expToString identifier)
     | If {token, ...} => (Token.toString token) ^ " (todo)"
     | Return {token, value} => "return " ^ (expToString value) ^ ";\n"
-    | ExpressionStatement {token, value} =>
-        (Token.toString token) ^ " " ^ (expToString value)
+    | ExpressionStatement {token, value} => (expToString value)
 end
