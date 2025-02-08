@@ -2,23 +2,24 @@ structure Parser =
 struct
   exception ParseException of string
 
-  type T = {lexer: Lexer.LexerT, currToken: Token.T, peekToken: Token.T}
+  (* 
+  * the book has peekToken, but since parser is immutable in our 
+  * implementation, we can skip it since we can have two different
+  * instance of parser representing the differennt states
+  *)
+  type T = {lexer: Lexer.LexerT, currToken: Token.T}
 
   fun new lexer =
-    let
-      val (current, lexer) = Lexer.nextToken lexer
-      val (peek, lexer) = Lexer.nextToken lexer
-    in
-      {lexer = lexer, currToken = current, peekToken = peek}
+    let val (current, lexer) = Lexer.nextToken lexer
+    in {lexer = lexer, currToken = current}
     end
 
   fun nextToken (parser: T) =
     let
       val current = #currToken parser
-      val peek = #peekToken parser
       val (next, lexer) = Lexer.nextToken (#lexer parser)
     in
-      (current, {lexer = lexer, currToken = peek, peekToken = next})
+      (current, {lexer = lexer, currToken = next})
     end
 
   datatype Precedence =
@@ -144,7 +145,7 @@ struct
             ("didn't find prefix parse function for " ^ (Token.toString token))
       | SOME prefixFn =>
           let val (leftExp, p1: T) = prefixFn token parser
-          in loop leftExp precedence parser
+          in loop leftExp precedence p1
           end
     end
 
