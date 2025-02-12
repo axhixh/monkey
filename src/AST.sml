@@ -4,17 +4,22 @@ struct
   datatype Expression =
     Boolean of {token: Token.T, value: bool}
   | Identifier of {token: Token.T, value: string}
+  | IfExpression of
+      { token: Token.T
+      , condition: Expression
+      , consequence: Statement
+      , alternative: Statement
+      }
   | InfixExpression of
       {token: Token.T, left: Expression, operator: string, right: Expression}
   | Integer of {token: Token.T, value: int}
   | PrefixExpression of {token: Token.T, operator: string, right: Expression}
-
-  datatype Statement =
-    Let of {token: Token.T, identifier: Expression, value: Expression}
-  | Func of {token: Token.T, identifier: Expression}
-  | If of {token: Token.T, tValue: Expression, fValue: Expression}
-  | Return of {token: Token.T, value: Expression}
+  and Statement =
+    BlockStatement of {token: Token.T, statements: Statement list}
   | ExpressionStatement of {token: Token.T, value: Expression}
+  | Func of {token: Token.T, identifier: Expression}
+  | Let of {token: Token.T, identifier: Expression, value: Expression}
+  | Return of {token: Token.T, value: Expression}
 
   type Program = Statement list
 
@@ -22,6 +27,9 @@ struct
     case expression of
       Boolean {token, value} => Bool.toString value
     | Identifier {token, value} => value
+    | IfExpression {token, condition, consequence, alternative} =>
+        "if " ^ (expToString condition) ^ (toString consequence)
+        ^ (toString alternative)
     | InfixExpression {token, left, operator, right} =>
         "(" ^ (expToString left) ^ " " ^ operator ^ " " ^ (expToString right)
         ^ ")"
@@ -29,13 +37,20 @@ struct
     | PrefixExpression {token, operator, right} =>
         "(" ^ operator ^ (expToString right) ^ ")"
 
-  fun toString node =
-    case node of
-      Let {token, identifier, value} =>
-        "let " ^ (expToString identifier) ^ " = " ^ (expToString value) ^ ";\n"
-    | Func {token, identifier} =>
-        (Token.toString token) ^ " " ^ (expToString identifier)
-    | If {token, ...} => (Token.toString token) ^ " (todo)"
-    | Return {token, value} => "return " ^ (expToString value) ^ ";\n"
-    | ExpressionStatement {token, value} => (expToString value)
+  and toString node =
+    let
+      fun statementsToString statements =
+        String.concatWith ";\n" (List.map toString statements)
+    in
+      case node of
+        BlockStatement {token, statements} =>
+          "{\n" ^ (statementsToString statements) ^ "}\n"
+      | ExpressionStatement {token, value} => (expToString value)
+      | Func {token, identifier} =>
+          (Token.toString token) ^ " " ^ (expToString identifier)
+      | Let {token, identifier, value} =>
+          "let " ^ (expToString identifier) ^ " = " ^ (expToString value)
+          ^ ";\n"
+      | Return {token, value} => "return " ^ (expToString value) ^ ";\n"
+    end
 end
