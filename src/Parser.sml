@@ -74,6 +74,7 @@ struct
     | Token.Bang => SOME parsePrefixExpression
     | Token.Minus => SOME parsePrefixExpression
     | Token.LParen => SOME parseGroupedExpression
+    | Token.If => SOME parseIfExpression
     | _ => NONE
 
   and infixParseFn token =
@@ -117,7 +118,35 @@ struct
       val (t2, p2) = nextToken p1
     in
       if Token.RParen = t2 then (exp, p2)
-      else raise ParseException ("expected )but got " ^ (Token.toString t2))
+      else raise ParseException ("expected ) but got " ^ (Token.toString t2))
+    end
+
+  and parseIfExpression (token, parser) =
+    let
+      val (t1, p1) = nextToken parser
+      val (condition, p2) =
+        if Token.LParen = t1 then
+          parseExpression Lowest (t1, p1)
+        else
+          raise ParseException
+            ("expected ( for if expression, but got " ^ (Token.toString t1))
+      val (consequence, p3) = parseBlockStatement p2
+      val (alternative, p4) =
+        case (nextToken p3) of
+          (Token.Else, p5) =>
+            let val (stmt, p) = parseBlockStatement p5
+            in (SOME stmt, p)
+            end
+        | _ => (NONE, p3)
+    in
+      ( AST.IfExpression
+          { token = t1
+          , condition = condition
+          , consequence = consequence
+          , alternative = alternative
+          }
+      , p4
+      )
     end
 
   and parseExpression precedence (token, parser) =
@@ -176,12 +205,35 @@ struct
       )
     end
 
-  fun parseAssign parser =
+  and parseBlockStatement parser =
+    let
+      fun parse currentParser statements =
+        case (nextToken currentParser) of
+          (Token.EOF, p) => (statements, p)
+        | (Token.RBrace, p) => (statements, p)
+        | (Token.Semicolon, p) => parse p statements
+        | (t, p) =>
+            let val (stmt, p') = parseStatement (t, p)
+            in parse p' (stmt :: statements)
+            end
+    in
+      let
+        val (t, p') =
+          nextToken parser (* do else always have {} around the statements? *)
+        val (stmts, p) = parse p' nil
+      in
+        ( AST.BlockStatement {statements = List.rev stmts, token = Token.LBrace}
+        , p
+        )
+      end
+    end
+
+  and parseAssign parser =
     case (nextToken parser) of
       (Token.Assign, p) => p
     | _ => raise ParseException "unable to parse assign"
 
-  fun parseLet parser =
+  and parseLet parser =
     let
       val (identifier, p1) = parseIdentifier (nextToken parser)
       val p2 = parseAssign p1
@@ -190,17 +242,17 @@ struct
       (AST.Let {token = Token.Let, identifier = identifier, value = value}, p3)
     end
 
-  fun parseReturn parser =
+  and parseReturn parser =
     let val (v, p1) = parseExpression Lowest (nextToken parser)
     in (AST.Return {token = Token.Return, value = v}, p1)
     end
 
-  fun parseExpressionStatement (token, parser) =
+  and parseExpressionStatement (token, parser) =
     let val (expression, p) = parseExpression Lowest (token, parser)
     in (AST.ExpressionStatement {token = token, value = expression}, p)
     end
 
-  fun parseStatement (token, parser) =
+  and parseStatement (token, parser) =
     case token of
       Token.Let => parseLet parser
     | Token.Return => parseReturn parser

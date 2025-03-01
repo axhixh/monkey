@@ -8,7 +8,7 @@ struct
       { token: Token.T
       , condition: Expression
       , consequence: Statement
-      , alternative: Statement
+      , alternative: Statement option
       }
   | InfixExpression of
       {token: Token.T, left: Expression, operator: string, right: Expression}
@@ -29,7 +29,9 @@ struct
     | Identifier {token, value} => value
     | IfExpression {token, condition, consequence, alternative} =>
         "if " ^ (expToString condition) ^ (toString consequence)
-        ^ (toString alternative)
+        ^
+        (if Option.isSome alternative then ("else " ^ toString (Option.valOf alternative))
+         else "")
     | InfixExpression {token, left, operator, right} =>
         "(" ^ (expToString left) ^ " " ^ operator ^ " " ^ (expToString right)
         ^ ")"
@@ -44,7 +46,7 @@ struct
     in
       case node of
         BlockStatement {token, statements} =>
-          "{\n" ^ (statementsToString statements) ^ "}\n"
+          "{\n" ^ (statementsToString statements) ^ "\n}\n"
       | ExpressionStatement {token, value} => (expToString value)
       | Func {token, identifier} =>
           (Token.toString token) ^ " " ^ (expToString identifier)
