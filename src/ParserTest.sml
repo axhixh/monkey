@@ -5,9 +5,9 @@ fun testIfExpression input =
     val program: AST.Program = Parser.parseProgram parser
   in
     case program of
-      [AST.ExpressionStatement {token, value}] =>
+      [AST.ExpressionStatement value] =>
         (case value of
-           AST.IfExpression {token, condition, consequence, alternative} =>
+           AST.IfExpression {condition, consequence, alternative} =>
              print ("testIfExpression:\n" ^ (AST.expToString value) ^ " OK\n")
          | _ => print ("testIfExpression " ^ input ^ " FAIL\n"))
     | _ => print ("testIfExpression " ^ input ^ " FAIL\n")
