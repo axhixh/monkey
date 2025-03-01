@@ -91,7 +91,7 @@ struct
 
   and parseIdentifier (token, parser) =
     case (token, parser) of
-      (Token.Ident i, p) => (AST.Identifier {token = token, value = i}, p)
+      (Token.Ident i, p) => (AST.Identifier i, p)
     | _ =>
         raise ParseException
           ("unexpected token while parsing identifier " ^ (Token.toString token))
@@ -100,14 +100,14 @@ struct
     case token of
       Token.Int v =>
         (case (Int.fromString v) of
-           SOME i => (AST.Integer {token = token, value = i}, parser)
+           SOME i => (AST.Integer i, parser)
          | NONE => raise ParseException "expected a number")
     | _ => raise ParseException "unable to parse integer"
 
   and parseBooleanLiteral (token, parser) =
     case token of
-      Token.True => (AST.Boolean {token = token, value = true}, parser)
-    | Token.False => (AST.Boolean {token = token, value = false}, parser)
+      Token.True => (AST.Boolean true, parser)
+    | Token.False => (AST.Boolean false, parser)
     | _ =>
         raise ParseException
           ("expected boolean literal, got " ^ (Token.toString token))
@@ -140,8 +140,7 @@ struct
         | _ => (NONE, p3)
     in
       ( AST.IfExpression
-          { token = t1
-          , condition = condition
+          { condition = condition
           , consequence = consequence
           , alternative = alternative
           }
@@ -183,10 +182,7 @@ struct
       val (rightExpression, p1) = parseExpression Prefix (nextToken parser)
     in
       ( AST.PrefixExpression
-          { token = token
-          , operator = Token.toString token
-          , right = rightExpression
-          }
+          {operator = Token.toString token, right = rightExpression}
       , p1
       )
     end
@@ -196,11 +192,7 @@ struct
       val (rightExp, p) = parseExpression (precedences token) (nextToken parser)
     in
       ( AST.InfixExpression
-          { token = token
-          , operator = (Token.toString token)
-          , left = leftExp
-          , right = rightExp
-          }
+          {operator = (Token.toString token), left = leftExp, right = rightExp}
       , p
       )
     end
@@ -222,9 +214,7 @@ struct
           nextToken parser (* do else always have {} around the statements? *)
         val (stmts, p) = parse p' nil
       in
-        ( AST.BlockStatement {statements = List.rev stmts, token = Token.LBrace}
-        , p
-        )
+        (AST.BlockStatement (List.rev stmts), p)
       end
     end
 
@@ -239,17 +229,17 @@ struct
       val p2 = parseAssign p1
       val (value, p3) = parseExpression Lowest (nextToken p2)
     in
-      (AST.Let {token = Token.Let, identifier = identifier, value = value}, p3)
+      (AST.Let {identifier = identifier, value = value}, p3)
     end
 
   and parseReturn parser =
     let val (v, p1) = parseExpression Lowest (nextToken parser)
-    in (AST.Return {token = Token.Return, value = v}, p1)
+    in (AST.Return v, p1)
     end
 
   and parseExpressionStatement (token, parser) =
     let val (expression, p) = parseExpression Lowest (token, parser)
-    in (AST.ExpressionStatement {token = token, value = expression}, p)
+    in (AST.ExpressionStatement expression, p)
     end
 
   and parseStatement (token, parser) =

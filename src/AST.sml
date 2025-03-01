@@ -1,42 +1,46 @@
 structure AST =
 struct
 
+  (* The book retains the token used to parse the expression and statements.
+   * When writing and debugging code, I never used the token so removing it
+   * to make it simpler.
+   *)
   datatype Expression =
-    Boolean of {token: Token.T, value: bool}
-  | Identifier of {token: Token.T, value: string}
+    Boolean of bool
+  | Identifier of string
   | IfExpression of
-      { token: Token.T
-      , condition: Expression
+      { condition: Expression
       , consequence: Statement
       , alternative: Statement option
       }
-  | InfixExpression of
-      {token: Token.T, left: Expression, operator: string, right: Expression}
-  | Integer of {token: Token.T, value: int}
-  | PrefixExpression of {token: Token.T, operator: string, right: Expression}
+  | InfixExpression of {left: Expression, operator: string, right: Expression}
+  | Integer of int
+  | PrefixExpression of {operator: string, right: Expression}
   and Statement =
-    BlockStatement of {token: Token.T, statements: Statement list}
-  | ExpressionStatement of {token: Token.T, value: Expression}
-  | Func of {token: Token.T, identifier: Expression}
-  | Let of {token: Token.T, identifier: Expression, value: Expression}
-  | Return of {token: Token.T, value: Expression}
+    BlockStatement of Statement list
+  | ExpressionStatement of Expression
+  | Func of Expression
+  | Let of {identifier: Expression, value: Expression}
+  | Return of Expression
 
   type Program = Statement list
 
   fun expToString expression =
     case expression of
-      Boolean {token, value} => Bool.toString value
-    | Identifier {token, value} => value
-    | IfExpression {token, condition, consequence, alternative} =>
+      Boolean value => Bool.toString value
+    | Identifier value => value
+    | IfExpression {condition, consequence, alternative} =>
         "if " ^ (expToString condition) ^ (toString consequence)
         ^
-        (if Option.isSome alternative then ("else " ^ toString (Option.valOf alternative))
-         else "")
-    | InfixExpression {token, left, operator, right} =>
+        (if Option.isSome alternative then
+           ("else " ^ toString (Option.valOf alternative))
+         else
+           "")
+    | InfixExpression {left, operator, right} =>
         "(" ^ (expToString left) ^ " " ^ operator ^ " " ^ (expToString right)
         ^ ")"
-    | Integer {token, value} => Int.toString value
-    | PrefixExpression {token, operator, right} =>
+    | Integer value => Int.toString value
+    | PrefixExpression {operator, right} =>
         "(" ^ operator ^ (expToString right) ^ ")"
 
   and toString node =
@@ -45,14 +49,13 @@ struct
         String.concatWith ";\n" (List.map toString statements)
     in
       case node of
-        BlockStatement {token, statements} =>
+        BlockStatement statements =>
           "{\n" ^ (statementsToString statements) ^ "\n}\n"
-      | ExpressionStatement {token, value} => (expToString value)
-      | Func {token, identifier} =>
-          (Token.toString token) ^ " " ^ (expToString identifier)
-      | Let {token, identifier, value} =>
+      | ExpressionStatement value => (expToString value)
+      | Func identifier => "func " ^ (expToString identifier)
+      | Let {identifier, value} =>
           "let " ^ (expToString identifier) ^ " = " ^ (expToString value)
           ^ ";\n"
-      | Return {token, value} => "return " ^ (expToString value) ^ ";\n"
+      | Return value => "return " ^ (expToString value) ^ ";\n"
     end
 end
