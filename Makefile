@@ -25,6 +25,10 @@ AST.uo: src/AST.sml Token.uo
 Parser.uo: src/Parser.sml AST.uo Lexer.uo Util.uo AssocList.uo
 	mosmlc -I src -c $<
 
+ParserTest: src/ParserTest.sml Parser.uo
+	mkdir -p bin
+	mosmlc -standalone -o bin/parser-test -I src $<
+	
 repl: src/Repl.sml Parser.uo 
 	mkdir -p bin
 	mosmlc -standalone -o bin/$@ -I src $< 
