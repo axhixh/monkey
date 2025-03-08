@@ -75,6 +75,7 @@ struct
     | Token.Minus => SOME parsePrefixExpression
     | Token.LParen => SOME parseGroupedExpression
     | Token.If => SOME parseIfExpression
+    | Token.Function => SOME parseFunctionLiteral
     | _ => NONE
 
   and infixParseFn token =
@@ -210,8 +211,7 @@ struct
             end
     in
       let
-        val (t, p') =
-          nextToken parser (* do else always have {} around the statements? *)
+        val (t, p') = nextToken parser
         val (stmts, p) = parse p' nil
       in
         (AST.BlockStatement (List.rev stmts), p)
@@ -222,6 +222,33 @@ struct
     case (nextToken parser) of
       (Token.Assign, p) => p
     | _ => raise ParseException "unable to parse assign"
+
+  and parseFunctionParameters parser =
+    let
+      fun parse currentParser identifiers =
+        case (nextToken currentParser) of
+          (Token.EOF, p) => (identifiers, p)
+        | (Token.RParen, p) => (identifiers, p)
+        | (Token.Comma, p) => parse p identifiers
+        | (t, p) =>
+            let val (identifier, p') = parseIdentifier (t, p)
+            in parse p' (identifier :: identifiers)
+            end
+      val (params, p) = parse parser nil
+    in
+      (List.rev params, p)
+    end
+
+  and parseFunctionLiteral (token, parser) =
+    let
+      val (t, p) = nextToken parser
+      val (parameters, p1) =
+        if t = Token.LParen then parseFunctionParameters p
+        else raise ParseException "error parsing function expected ("
+      val (body, p2) = parseBlockStatement p1
+    in
+      (AST.Func {parameters = parameters, body = body}, p2)
+    end
 
   and parseLet parser =
     let

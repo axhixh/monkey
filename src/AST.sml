@@ -7,6 +7,7 @@ struct
    *)
   datatype Expression =
     Boolean of bool
+  | Func of {parameters: Expression list, body: Statement}
   | Identifier of string
   | IfExpression of
       { condition: Expression
@@ -19,7 +20,6 @@ struct
   and Statement =
     BlockStatement of Statement list
   | ExpressionStatement of Expression
-  | Func of Expression
   | Let of {identifier: Expression, value: Expression}
   | Return of Expression
 
@@ -28,6 +28,13 @@ struct
   fun expToString expression =
     case expression of
       Boolean value => Bool.toString value
+    | Func {parameters, body} =>
+        "fn ("
+        ^
+        (List.foldl
+           (fn (s, a) =>
+              a ^ (if String.size a = 0 then "" else ", ") ^ (expToString s)) ""
+           parameters) ^ ") " ^ (toString body)
     | Identifier value => value
     | IfExpression {condition, consequence, alternative} =>
         "if " ^ (expToString condition) ^ (toString consequence)
@@ -52,7 +59,6 @@ struct
         BlockStatement statements =>
           "{\n" ^ (statementsToString statements) ^ "\n}\n"
       | ExpressionStatement value => (expToString value)
-      | Func identifier => "func " ^ (expToString identifier)
       | Let {identifier, value} =>
           "let " ^ (expToString identifier) ^ " = " ^ (expToString value)
           ^ ";\n"
