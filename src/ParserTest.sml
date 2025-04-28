@@ -20,6 +20,15 @@ fun testFnExpression input =
   in List.map (fn s => print (AST.toString s)) e
   end
 
+fun testCallExpression input =
+  case (parse input) of
+    [AST.ExpressionStatement value] =>
+      (case value of
+         AST.CallExpression {function, arguments} =>
+           print ("testCallExpression:\n " ^ (AST.expToString value) ^ " OK\n")
+       | _ => print ("testCallExpression " ^ input ^ " FAIL\n"))
+  | _ => print ("testCallExpression " ^ input ^ " FAIL\n")
+
 (* case (parse input) of *)
 (* [AST.ExpressionStatement {expression}] => *)
 (* print "ok" *)
@@ -32,4 +41,6 @@ val _ =
   ; testFnExpression "fn (x) { };"
   ; testFnExpression "fn (x, y) { };"
   ; testFnExpression "fn (x, y, z) { };"
+  ; testCallExpression "add(1, 2, 3);"
+  ; testCallExpression "add(1, 2 * 3, 4 + 5);"
   )
