@@ -41,6 +41,7 @@ struct
     | Token.Minus => Sum
     | Token.Slash => Product
     | Token.Asterisk => Product
+    | Token.LParen => Call
     | _ => Lowest
 
   fun compare p1 p2 =
@@ -88,6 +89,7 @@ struct
     | Token.NotEq => SOME parseInfixExpression
     | Token.LT => SOME parseInfixExpression
     | Token.GT => SOME parseInfixExpression
+    | Token.LParen => SOME parseCallExpression
     | _ => NONE
 
   and parseIdentifier (token, parser) =
@@ -196,6 +198,30 @@ struct
           {operator = (Token.toString token), left = leftExp, right = rightExp}
       , p
       )
+    end
+
+  and parseCallArgument parser =
+    let
+      fun parse currentParser arguments =
+        case (nextToken currentParser) of
+          (Token.RParen, p) =>
+            let val (t, p') = nextToken p
+            in (arguments, p')
+            end
+        | (Token.Comma, p) => parse p arguments
+        | (t, p) =>
+            let val (expr, p') = parseExpression Lowest (t, p)
+            in parse p' (expr :: arguments)
+            end
+    in
+      let val (arguments, p) = parse parser nil
+      in ((List.rev arguments), p)
+      end
+    end
+
+  and parseCallExpression funcExp (token, parser) =
+    let val (arguments, p) = parseCallArgument parser
+    in (AST.CallExpression {function = funcExp, arguments = arguments}, p)
     end
 
   and parseBlockStatement parser =
