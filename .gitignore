@@ -1,3 +1,5 @@
 *.ui
 *.uo
 bin
+monkey
+test

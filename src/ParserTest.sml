@@ -43,4 +43,5 @@ val _ =
   ; testFnExpression "fn (x, y, z) { };"
   ; testCallExpression "add(1, 2, 3);"
   ; testCallExpression "add(1, 2 * 3, 4 + 5);"
+  ; testCallExpression "add(2, add(3, 4));"
   )
